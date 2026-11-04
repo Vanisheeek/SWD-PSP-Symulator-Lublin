@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWD PSP v1.5.0 - Symulator (Powiat Raciborski)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+    <div class="top-menu">
+        <div class="menu-item">System</div>
+        <div class="menu-item" onclick="switchMainView('table')">Widok</div>
+        <div class="menu-item" onclick="openReportsModal()">Rejestr Wyjazdów</div>
+        <div class="menu-item">Ewid</div>
+        <div class="menu-item" onclick="openSiSModal()">Siły i środki</div>
+        <div class="menu-item" onclick="switchMainView('map')">Mapy</div>
+        <div class="menu-item" onclick="switchMainView('table')">Podział Bojowy</div>
+        <div class="menu-item" onclick="openReportsModal()">Zestawienia i raporty</div>
+        <div class="menu-item">Urządzenia</div>
+        <div class="menu-item">Okna</div>
+        <div class="menu-item">Komunikator</div>
+        <div class="menu-item">Pomoc</div>
+    </div>
+
+    <div class="workspace">
+        <div class="tabs-bar">
+            <button class="tab-btn active" id="btn-tab-psp" onclick="switchTab('PSP')">PSP</button>
+            <button class="tab-btn" id="btn-tab-osp" onclick="switchTab('OSP')">OSP</button>
+            <button class="tab-btn" id="btn-tab-map" onclick="switchMainView('map')">🗺️ Mapa Operacyjna</button>
+            <button class="tab-btn" onclick="openReportsModal()">📊 Zestawienia i Raporty</button>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden;">
+            <div id="view-map-container" style="flex: 1; display: none; width: 100%; min-height: 260px; border: 1px solid #7f9db9; position: relative;">
+                <div id="leaflet-map" style="width: 100%; height: 100%;"></div>
+            </div>
+            <div id="grid-psp" class="units-grid"></div>
+            <div id="grid-osp" class="units-grid" style="display: none;"></div>
+
+            <div class="bottom-panel">
+                <div class="left-events">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn-win" onclick="openNewEventModal()">Utwórz kartę zdarzenia</button>
+                        <button class="btn-win" style="background: #ffe6e6; border-color: #b30000; font-weight: bold; color: #800000;" onclick="simulateIncomingCPR()">⚡ Symuluj nowe zgłoszenie z CPR (112)</button>
+                        <button class="btn-win" id="btn-open-radio" style="background: #e6f2ff; border-color: #0a246a; font-weight: bold; color: #0a246a; display: none;" onclick="openRadioForSelectedEvent()">📻 Otwórz radio zdarzenia</button>
+                    </div>
+                    <div class="events-table-container">
+                        <table class="events-table">
+                            <thead>
+                                <tr>
+                                    <th>ID zdarzenia</th>
+                                    <th>Data/Godzina</th>
+                                    <th>KP/KM</th>
+                                    <th>JRG</th>
+                                    <th>Miejsce</th>
+                                    <th>Zastępy</th>
+                                    <th>Rodzaj</th>
+                                    <th>Opis</th>
+                                    <th>Czas / Status</th>
+                                    <th>Nr meldunku</th>
+                                </tr>
+                            </thead>
+                            <tbody id="events-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="right-details">
+                    <div class="details-bar">
+                        <button style="font-size: 10px;">S</button>
+                        <button style="font-size: 10px; font-weight: bold;">L</button>
+                        <span id="details-title">Szczegóły zdarzenia</span>
+                    </div>
+                    <div style="padding: 4px; flex: 1; overflow-y: auto;">
+                        <table class="sis-table">
+                            <thead>
+                                <tr>
+                                    <th>Nazwa</th>
+                                    <th>Obsada</th>
+                                    <th>Jednostka</th>
+                                    <th>Status SiS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="details-sis-body">
+                                <tr><td colspan="4" style="text-align: center; color: #888;">Brak wybranego zdarzenia</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cpr-window" id="cpr-modal">
+            <div class="cpr-header">
+                <span>🚨 NOWE ZGŁOSZENIE SI WCPR (112)</span>
+                <div style="display: flex; gap: 2px;">
+                    <div class="modal-min" onclick="minimizeCPR()">_</div>
+                    <div class="modal-close" onclick="closeCPR()">×</div>
+                </div>
+            </div>
+            <div class="modal-body" style="background: #fff;">
+                <div class="form-title" style="color: #b30000;">Formatka zgłoszenia z Centrum Powiadamiania Ratunkowego</div>
+                <div style="margin-bottom: 6px; padding: 4px; background: #fff0f0; border: 1px solid #ffcccc;">
+                    <b>ID CPR:</b> <span id="cpr-id">WCPR-2026-9932</span><br>
+                    <b>Miejscowość:</b> <span id="cpr-city">Racibórz</span><br>
+                    <b>Adres:</b> <span id="cpr-street">ul. Opawska 45</span><br>
+                    <b>Zgłaszający:</b> <span id="cpr-caller">Jan Kowalski (tel. 601-234-567)</span>
+                </div>
+                <div class="form-title">Treść powiadomienia:</div>
+                <div id="cpr-desc" style="padding: 6px; background: #f9f9f9; border: 1px solid #ccc; font-style: italic; margin-bottom: 8px;">
+                    Zgłoszenie pożaru sadzy w przewodzie kominowym budynku mieszkalnego jednorodzinnego.
+                </div>
+                <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                    <button class="btn-win" onclick="minimizeCPR()">Minimalizuj</button>
+                    <button class="btn-win" style="font-weight: bold; background: #e2f0d9;" onclick="acceptCPRToEvent()">Otwórz w nowej karcie zdarzenia ➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="minimized-bar" id="minimized-bar">
+        <span style="color: #555; font-style: italic; margin-right: 6px;">Zminimalizowane okna:</span>
+    </div>
+
+    <div class="status-bar">
+        <span>Zalogowano jako: <b>aspirant damja</b></span>
+        <div class="status-box" style="margin-left: auto;">Transmisja</div>
+        <div class="status-box">Stan SIWCPR: Stan połączenia: OK</div>
+        <div class="status-box">Terminale statusów</div>
+        <div class="status-box" id="clock-box">2026-10-27 14:00:00</div>
+    </div>
+
+    <!-- MODAL: KARTA ZDARZENIA -->
+    <div class="modal-overlay" id="modal-event">
+        <div class="modal-window" style="width: 920px; height: 720px;">
+            <div class="modal-header">
+                <span id="modal-event-title">Nowa Karta Zdarzenia</span>
+                <div class="modal-close" onclick="closeModal('modal-event')">×</div>
+            </div>
+
+            <div class="tabs-bar" style="padding: 4px 6px 0 6px; background: #d4d0c8;">
+                <button class="tab-btn active" id="tab-modal-dane" onclick="switchModalTab('dane')">Dane Zdarzenia</button>
+                <button class="tab-btn" id="tab-modal-czasy" onclick="switchModalTab('czasy')">Czasy operacyjne</button>
+            </div>
+
+            <div class="modal-body">
+                <div id="modal-tab-dane-content">
+                    <div class="form-box" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <b>Siły i Środki:</b> <span id="lbl-selected-count">Wybrano pojazdów: 0</span>
+                        </div>
+                        <button class="btn-win" onclick="openDispatchModal()">Dyspozycja</button>
+                    </div>
+
+                    <div class="form-box">
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Czas:</label>
+                                <input type="text" id="inp-ev-time">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Przyjęto:</label>
+                                <select id="inp-ev-received">
+                                    <option>Telefon</option>
+                                    <option>CPR</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Kanał:</label>
+                                <select><option>Straż Pożarna</option></select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Jednostka:</label>
+                                <select id="inp-ev-jrg">
+                                    <option>JRG Racibórz</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 6px;">
+                        <div style="flex: 1.3; display: flex; flex-direction: column; gap: 4px;">
+                            <div class="form-box">
+                                <div class="form-title">Lokalizacja</div>
+                                <div class="form-group" style="position: relative;">
+                                    <label>Miejscowość:</label>
+                                    <input type="text" id="inp-ev-city" placeholder="Wpisz np. Racibórz, Pietrowice Wielkie..." oninput="handleCityInput(this)">
+                                    <div id="city-suggestions" class="suggestions-list" style="display:none; width: 100%; top: 38px;"></div>
+                                </div>
+                                <div class="form-group" style="margin-top: 4px;">
+                                    <label>Gmina/pow./woj.:</label>
+                                    <input type="text" id="inp-ev-region" readonly style="background: #eee;">
+                                </div>
+                                <div class="form-group" style="margin-top: 4px;">
+                                    <label>Adres:</label>
+                                    <input type="text" id="inp-ev-street" placeholder="Ulica / Nr budynku">
+                                </div>
+                                <div class="form-row" style="margin-top: 4px;">
+                                    <div class="form-group" style="flex:1;"><label>Obiekt:</label><input type="text"></div>
+                                    <div class="form-group" style="width:50px;"><label>Piętro:</label><input type="text" value="0"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-box">
+                                <div class="form-title">Informacje dodatkowe - opis zdarzenia</div>
+                                <textarea id="inp-ev-desc" style="width: 100%; height: 50px;" placeholder="Wpisz np. pożar sadzy, kolizja..."></textarea>
+                            </div>
+
+                            <div class="form-box">
+                                <div class="form-title">Zdarzenie</div>
+                                <div class="form-row">
+                                    <label><input type="radio" name="ev-type" value="P" checked onclick="updateSubtypes('P')"> P</label>
+                                    <label><input type="radio" name="ev-type" value="MZ" onclick="updateSubtypes('MZ')"> MZ</label>
+                                    <label><input type="radio" name="ev-type" value="AF" onclick="updateSubtypes('AF')"> AF</label>
+                                    <label><input type="radio" name="ev-type" value="CW" onclick="updateSubtypes('CW')"> CW</label>
+                                    <label><input type="radio" name="ev-type" value="WG" onclick="updateSubtypes('WG')"> WG</label>
+                                    <label><input type="radio" name="ev-type" value="BL" onclick="updateSubtypes('BL')"> BL</label>
+                                    <label><input type="radio" name="ev-type" value="ZPR" onclick="updateSubtypes('ZPR')"> ZPR</label>
+                                    <label><input type="radio" name="ev-type" value="PZR" onclick="updateSubtypes('PZR')"> PZR</label>
+                                </div>
+                                <div class="form-group" style="margin-top: 4px;" id="subtype-group">
+                                    <label>Podrodzaj:</label>
+                                    <select id="inp-ev-subtype"></select>
+                                </div>
+                                <div class="form-row" style="margin-top: 4px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Jedn. prow.:</label>
+                                        <select id="inp-ev-lead">
+                                            <option>JRG Racibórz</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Teren działania:</label>
+                                        <select id="inp-ev-area">
+                                            <option>JRG Racibórz</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                            <div class="form-box">
+                                <div class="form-title">Dane zgłaszającego</div>
+                                <div class="form-group"><label>Imię:</label><input type="text" id="inp-caller-name"></div>
+                                <div class="form-group"><label>Nazwisko:</label><input type="text" id="inp-caller-surname"></div>
+                                <div class="form-group"><label>Nr telefonu:</label><input type="text" id="inp-caller-phone"></div>
+                            </div>
+
+                            <div class="form-box">
+                                <div class="form-title">Powiadomione służby</div>
+                                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                                    <div class="service-btn" id="btn-service-prm" onclick="toggleService('prm')">⚕ PRM</div>
+                                    <div class="service-btn" id="btn-service-police" onclick="toggleService('police')">🚔 Policja</div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                                    <label><input type="checkbox"> Pogotowie Gazowe</label>
+                                    <label><input type="checkbox"> Pogotowie Energetyczne</label>
+                                    <label><input type="checkbox"> Straż Miejska</label>
+                                    <label><input type="checkbox"> Wojsko</label>
+                                </div>
+                            </div>
+
+                            <div class="form-box">
+                                <div class="form-title">Flagi zdarzenia</div>
+                                <div class="flags-container">
+                                    <label><input type="checkbox"> Do wiadomości KG</label>
+                                    <label><input type="checkbox"> Do wiadomości KW</label>
+                                    <label><input type="checkbox"> Doskonalenie kierowców</label>
+                                    <label><input type="checkbox"> Działania międzynarodowe</label>
+                                    <label><input type="checkbox"> Ewakuacja osób</label>
+                                    <label><input type="checkbox"> GIOŚ / WIOŚ</label>
+                                    <label><input type="checkbox"> HNS</label>
+                                    <label><input type="checkbox"> IZRM</label>
+                                    <label><input type="checkbox"> Koronawirus</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-tab-czasy-content" style="display: none;">
+                    <div class="form-box">
+                        <div class="form-title">Czasy operacyjne zdarzenia</div>
+                        <div class="form-group"><label>Czas rozpoczęcia:</label><input type="text" id="time-start"></div>
+                        <div class="form-group" style="margin-top: 4px;"><label>Czas Lokalizacji:</label><input type="text" id="time-lok"></div>
+                        <div class="form-group" style="margin-top: 4px;"><label>Czas zakończenia:</label><input type="text" id="time-end"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 6px; background: #e1e1e1; border-top: 1px solid #aaa; display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn-win" style="background: #ffcccc; color: #800000;" onclick="finishCurrentEvent()">Zakończ zdarzenie / Przywróć SiS</button>
+                <button class="btn-win" onclick="closeModal('modal-event')">❌ Anuluj</button>
+                <button class="btn-win" style="font-weight: bold; background: #e2f0d9;" onclick="saveEvent()">✅ Zapisz</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-dispatch">
+        <div class="modal-window" style="width: 550px; height: 500px;">
+            <div class="modal-header">
+                <span id="dispatch-modal-title">Wybór Sił i Środków (wg odległości)</span>
+                <div class="modal-close" onclick="closeModal('modal-dispatch')">×</div>
+            </div>
+            <div id="dispatch-info-bar" style="background: #f0f4f9; padding: 4px 8px; border-bottom: 1px solid #7f9db9; font-weight: bold; color: #0a246a;">
+                Kolejność jednostek od najbliższej do miejsca zdarzenia
+            </div>
+            <div class="modal-body" id="dispatch-list" style="background: #ece9d8; padding: 6px;"></div>
+            <div style="padding: 6px; background: #e1e1e1; border-top: 1px solid #aaa; display: flex; justify-content: flex-end; gap: 6px;">
+                <button class="btn-win" onclick="closeModal('modal-dispatch')">Anuluj</button>
+                <button class="btn-win" style="font-weight: bold; background: #e2f0d9;" onclick="confirmDispatch()">Zatwierdź wybór</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="profiles.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
