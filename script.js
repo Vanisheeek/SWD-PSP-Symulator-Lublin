@@ -1,5 +1,5 @@
 // --- STAŁA WERSJI APLIKACJI SWDST ---
-const APP_VERSION = "SWDST 0.34 (Lublin Only - OSRM Road Geometry Routing)";
+const APP_VERSION = "SWDST 0.35 (Lublin i Powiat Lubelski - OSRM Routing)";
 
 // --- MODUŁ AUDIO ---
 const audioSelekt = new Audio('selekt.wav');
@@ -100,27 +100,79 @@ function unpackProfile(raw) {
     };
 }
 
-// INICJALIZACJA PROFILI DANYCH Z PLIKU profiles.js
+// INICJALIZACJA PROFILU — LUBLIN JEST DOMYŚLNYM I JEDYNYM REJONEM
+
+// --- PROFIL LUBLIN / POWIAT LUBELSKI ---
+const LUBLIN_PROFILE = {
+    id: "lublin",
+    name: "KM PSP Lublin — Lublin i Powiat Lubelski",
+    radioCallsign: "Lublin 998",
+    desc: "Miasto Lublin i Powiat Lubelski",
+    voivodeship: "lubelskie",
+    countyName: "Lublin i powiat lubelski",
+    mapCenter: [51.2465, 22.5684],
+    bbox: "22.20,51.05,22.85,51.45",
+    jrgList: ["JRG 1 Lublin", "JRG 2 Lublin", "JRG 3 Lublin"],
+    defaultTown: "Lublin",
+    towns: [
+        ["Lublin", "miasto na prawach powiatu", 51.2465, 22.5684, ["ul. Krakowskie Przedmieście", "ul. Lipowa", "ul. Narutowicza", "ul. Lubartowska", "ul. Kunickiego", "ul. Zamojska", "ul. Głęboka", "ul. Jana Pawła II", "ul. Mełgiewska", "al. Solidarności"]],
+        ["Borzechów", "gmina Borzechów", 51.0900, 22.2800, ["ul. Główna", "ul. Szkolna"]],
+        ["Wysokie", "gmina Wysokie", 50.9120, 22.6670, ["ul. Partyzantów", "ul. Szkolna"]],
+        ["Zakrzew", "gmina Zakrzew", 50.9160, 22.5900, ["ul. Główna", "ul. Szkolna"]],
+        ["Jastków", "gmina Jastków", 51.3040, 22.4350, ["ul. Lubelska", "ul. Szkolna", "ul. Polna"]],
+        ["Moszenki", "gmina Jastków", 51.3150, 22.4260, ["ul. Strażacka", "ul. Główna"]],
+        ["Płouszowice", "gmina Jastków", 51.2920, 22.4430, ["ul. Płouszowicka", "ul. Główna"]],
+        ["Tomaszowice", "gmina Jastków", 51.2860, 22.4050, ["ul. Nałęczowska", "ul. Główna"]],
+        ["Dąbrowica", "gmina Jastków", 51.2700, 22.4700, ["ul. Dąbrowicka", "ul. Główna"]],
+        ["Snopków", "gmina Jastków", 51.2850, 22.4850, ["ul. Główna", "ul. Szkolna"]],
+        ["Panieńszczyzna", "gmina Jastków", 51.3000, 22.4500, ["ul. Lubelska", "ul. Główna"]],
+        ["Garbow", "gmina Garbów", 51.3550, 22.3290, ["ul. Krakowskie Przedmieście", "ul. Warszawska"]],
+        ["Niemce", "gmina Niemce", 51.3610, 22.6380, ["ul. Lubelska", "ul. Różana"]],
+        ["Wólka", "gmina Wólka", 51.2700, 22.6500, ["ul. Lubelska", "ul. Turystyczna"]],
+        ["Konopnica", "gmina Konopnica", 51.2180, 22.4400, ["ul. Lipowa", "ul. Raszyńska"]],
+        ["Wojciechów", "gmina Wojciechów", 51.2350, 22.2450, ["ul. Lubelska", "ul. Szkolna"]],
+        ["Bełżyce", "gmina Bełżyce", 51.1740, 22.2800, ["ul. Lubelska", "ul. Bychawska"]],
+        ["Bychawa", "gmina Bychawa", 51.0160, 22.5320, ["ul. Piłsudskiego", "ul. Lubelska"]],
+        ["Strzyżewice", "gmina Strzyżewice", 51.0600, 22.4300, ["ul. Główna", "ul. Leśna"]],
+        ["Niedrzwica Duża", "gmina Niedrzwica Duża", 51.1130, 22.3890, ["ul. Lubelska", "ul. Kraśnicka"]],
+        ["Głusk", "gmina Głusk", 51.1830, 22.6000, ["ul. Głuska", "ul. Wesoła"]],
+        ["Jabłonna", "gmina Jabłonna", 51.0830, 22.5900, ["ul. Lubelska", "ul. Szkolna"]],
+        ["Krzczonów", "gmina Krzczonów", 51.0110, 22.7100, ["ul. Żeromskiego", "ul. Główna"]],
+        ["Garbów", "gmina Garbów", 51.3550, 22.3290, ["ul. Warszawska", "ul. Krakowskie Przedmieście"]]
+    ],
+    // Dane pojazdów wpisane na podstawie wcześniej podanych informacji.
+    psp: [
+        ["KM PSP Lublin", "Lublin", "ul. Władysława Kunickiego", 51.2300, 22.5650, true,
+            [["LF 301-25", "GCBA 5/32 MAN TGM 18.320/MotoTruck", 6],
+             ["LF 301-21", "GBARt 2,5/16 Renault D16/MotoTruck", 6]]]
+    ],
+    osp: [
+        ["OSP Płouszowice", "Płouszowice", "Płouszowice", 51.2920, 22.4430, true,
+            [["LF 339-66", "GBARt 3/16 Renault D16", 6]]],
+        ["OSP Moszenki", "Moszenki", "Moszenki", 51.3150, 22.4260, true,
+            [["LF 339-24", "GBARt 2,5/16 Mercedes-Benz Atego", 6]]]
+    ]
+};
+
+const _sourceProfiles = (typeof RAW_PROFILES !== "undefined" && Array.isArray(RAW_PROFILES)) ? RAW_PROFILES : [];
+const _lublinProfiles = [..._sourceProfiles.filter(p => p.id !== "lublin"), LUBLIN_PROFILE];
+
 const COUNTY_PROFILES = {};
-if (typeof RAW_PROFILES !== 'undefined') {
-    RAW_PROFILES.forEach(rp => { COUNTY_PROFILES[rp.id] = unpackProfile(rp); });
-} else {
-    console.error("Błąd: Plik profiles.js nie został załadowany przed script.js!");
-}
+_lublinProfiles.forEach(rp => { COUNTY_PROFILES[rp.id] = unpackProfile(rp); });
 
 // --- ZMIENNE AKTYWNEGO POWIATU I ZALOGOWANEGO UŻYTKOWNIKA ---
-let currentCountyId = "raciborski";
-let currentCountyCallsign = "Racibórz 998";
+let currentCountyId = "lublin";
+let currentCountyCallsign = "Lublin 998";
 let currentUserRank = "asp.";
 let currentUserName = "";
 
-let locationsDatabase = COUNTY_PROFILES.raciborski ? { ...COUNTY_PROFILES.raciborski.locationsDatabase } : {};
+let locationsDatabase = COUNTY_PROFILES.lublin ? { ...COUNTY_PROFILES.lublin.locationsDatabase } : {};
 let townsList = Object.keys(locationsDatabase);
-let realStreetsByTown = COUNTY_PROFILES.raciborski ? { ...COUNTY_PROFILES.raciborski.realStreetsByTown } : {};
-let gpsCoords = COUNTY_PROFILES.raciborski ? { ...COUNTY_PROFILES.raciborski.gpsCoords } : {};
-let unitExactLocations = COUNTY_PROFILES.raciborski ? JSON.parse(JSON.stringify(COUNTY_PROFILES.raciborski.unitExactLocations)) : {};
-let unitsPSP = COUNTY_PROFILES.raciborski ? JSON.parse(JSON.stringify(COUNTY_PROFILES.raciborski.unitsPSP)) : [];
-let unitsOSP = COUNTY_PROFILES.raciborski ? JSON.parse(JSON.stringify(COUNTY_PROFILES.raciborski.unitsOSP)) : [];
+let realStreetsByTown = COUNTY_PROFILES.lublin ? { ...COUNTY_PROFILES.lublin.realStreetsByTown } : {};
+let gpsCoords = COUNTY_PROFILES.lublin ? { ...COUNTY_PROFILES.lublin.gpsCoords } : {};
+let unitExactLocations = COUNTY_PROFILES.lublin ? JSON.parse(JSON.stringify(COUNTY_PROFILES.lublin.unitExactLocations)) : {};
+let unitsPSP = COUNTY_PROFILES.lublin ? JSON.parse(JSON.stringify(COUNTY_PROFILES.lublin.unitsPSP)) : [];
+let unitsOSP = COUNTY_PROFILES.lublin ? JSON.parse(JSON.stringify(COUNTY_PROFILES.lublin.unitsOSP)) : [];
 
 function getStorageKeyForCounty(countyId) { return `SWDST_SAVED_SHIFT_STATE_${countyId}_V2`; }
 
@@ -156,7 +208,7 @@ function ensureLauncherModalExists() {
     modal.id = 'modal-launcher';
     modal.style.cssText = 'display:flex; background:rgba(10, 36, 106, 0.45); z-index:12000;';
 
-    const rawProf = (typeof RAW_PROFILES !== 'undefined') ? RAW_PROFILES : [];
+    const rawProf = [LUBLIN_PROFILE];
     const radiosHtml = rawProf.map((rp, idx) => `
         <label style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1.5px solid #0a246a; background: ${idx === 0 ? '#f0f5ff' : '#ffffff'}; cursor: pointer; border-radius: 3px;">
             <input type="radio" name="launcher-county" value="${rp.id}" ${idx === 0 ? 'checked' : ''}>
@@ -170,7 +222,7 @@ function ensureLauncherModalExists() {
     modal.innerHTML = `
         <div class="modal-window" style="width: 520px; background: #ece9d8; border: 2px solid #0a246a; box-shadow: 0 6px 25px rgba(0,0,0,0.6);">
             <div class="modal-header" style="background: linear-gradient(90deg, #0a246a, #1d4f91); color: #fff; padding: 6px 10px; font-size: 13px;">
-                <span>🚒 ${APP_VERSION} — Logowanie Dyspozytora KP PSP Racibórz</span>
+                <span>🚒 ${APP_VERSION} — Logowanie Dyspozytora KM PSP Lublin</span>
             </div>
             <div class="modal-body" style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
                 <div class="form-box" style="padding: 8px;">
@@ -227,7 +279,7 @@ function confirmLauncherLogin() {
 
     currentUserRank = selRank ? selRank.value : "asp.";
     currentUserName = inpUser ? inpUser.value.trim() : "";
-    const newCountyId = chosenCountyRadio ? chosenCountyRadio.value : "raciborski";
+    const newCountyId = chosenCountyRadio ? chosenCountyRadio.value : "lublin";
 
     localStorage.setItem('SWDST_USER_SESSION', JSON.stringify({
         rank: currentUserRank, username: currentUserName, countyId: newCountyId
@@ -241,7 +293,7 @@ function confirmLauncherLogin() {
 }
 
 function applyCountyProfile(countyId) {
-    const profile = COUNTY_PROFILES[countyId] || COUNTY_PROFILES.raciborski;
+    const profile = COUNTY_PROFILES[countyId] || COUNTY_PROFILES.lublin;
     if (!profile) return;
     
     currentCountyId = profile.id;
@@ -320,7 +372,7 @@ async function getRoadRouting(lat1, lon1, lat2, lon2, withGeometry = true) {
 async function getUnitProximityAsync(unitName, city, targetLat = null, targetLng = null) {
     const firstUnitKey = Object.keys(unitExactLocations)[0];
     const unitLoc = unitExactLocations[unitName] || unitExactLocations[firstUnitKey];
-    const defaultTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Racibórz";
+    const defaultTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Lublin";
     const targetTown = Object.keys(gpsCoords).find(c => c.toLowerCase() === (city || "").trim().toLowerCase()) || defaultTown;
     const tCoords = (targetLat && targetLng) ? [targetLat, targetLng] : (gpsCoords[targetTown] || COUNTY_PROFILES[currentCountyId].mapCenter);
 
@@ -346,7 +398,7 @@ async function getUnitProximityAsync(unitName, city, targetLat = null, targetLng
 function getUnitProximity(unitName, city) {
     const firstUnitKey = Object.keys(unitExactLocations)[0];
     const unitLoc = unitExactLocations[unitName] || unitExactLocations[firstUnitKey];
-    const defaultTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Racibórz";
+    const defaultTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Lublin";
     const targetTown = Object.keys(gpsCoords).find(c => c.toLowerCase() === (city || "").trim().toLowerCase()) || defaultTown;
     const tCoords = gpsCoords[targetTown] || COUNTY_PROFILES[currentCountyId].mapCenter;
 
@@ -1025,7 +1077,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     } catch (e) {}
 
-    applyCountyProfile("raciborski");
+    applyCountyProfile("lublin");
     updateStatusBarUserDisplay();
     ensureMainRadioWindow();
     ensureVersionBadgeInStatusBar();
@@ -1171,7 +1223,7 @@ function setVehicleStatusManual(vehId, newStatus) {
 }
 
 async function addCustomUnit(type) {
-    const defTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Racibórz";
+    const defTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Lublin";
     const name = prompt(`Podaj nazwę nowej jednostki ${type}:`);
     if (!name || !name.trim()) return;
     const town = prompt(`Podaj miejscowość stacjonowania jednostki:`, defTown) || defTown;
@@ -1628,7 +1680,7 @@ async function simulateIncomingCPR() {
     saveSimulationState();
 
     const newCprId = `WCPR-2026-${cprCounter++}`;
-    const randomTown = townsList[Math.floor(Math.random() * townsList.length)] || "Racibórz";
+    const randomTown = townsList[Math.floor(Math.random() * townsList.length)] || "Lublin";
     const chosenType = Math.random() < 0.5 ? "P" : "MZ";
 
     const townStreets = realStreetsByTown[randomTown] || ["ul. Długa", "ul. Szkolna"];
@@ -1980,7 +2032,7 @@ function openNewEventModal() {
     const countEl = document.getElementById('lbl-selected-count');
     const modalEl = document.getElementById('modal-event');
 
-    const defTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Racibórz";
+    const defTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Lublin";
 
     if(titleEl) titleEl.innerText = "Nowa Karta Zdarzenia";
     if(timeEl) timeEl.value = new Date().toLocaleTimeString();
@@ -2121,7 +2173,7 @@ async function openDispatchModal() {
 async function confirmDispatch() {
     const checkboxes = document.querySelectorAll('#dispatch-list input:checked');
     const cityInput = document.getElementById('inp-ev-city');
-    const defTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Racibórz";
+    const defTown = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].defaultTown : "Lublin";
     const targetCity = (cityInput && cityInput.value.trim()) ? cityInput.value.trim() : defTown;
     const newSelection = [];
 
@@ -2205,7 +2257,7 @@ function saveEvent() {
             const jrgInput = document.getElementById('inp-ev-jrg');
             const fallback = gpsCoords[city] || COUNTY_PROFILES[currentCountyId].mapCenter;
             const calcDuration = calculateActionDurationSeconds(descVal, subtypeVal, typeVal);
-            const defJrg = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].jrgList[0] : "JRG Racibórz";
+            const defJrg = COUNTY_PROFILES[currentCountyId] ? COUNTY_PROFILES[currentCountyId].jrgList[0] : "JRG 1 Lublin";
 
             const newEv = {
                 id: events.length + 1,
