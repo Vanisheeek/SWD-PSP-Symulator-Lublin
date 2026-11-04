@@ -1,5 +1,5 @@
 // --- STAŁA WERSJI APLIKACJI SWDST ---
-const APP_VERSION = "SWDST 0.34 (Racibórz Only - OSRM Road Geometry Routing)";
+const APP_VERSION = "SWDST 0.34 (Lublin Only - OSRM Road Geometry Routing)";
 
 // --- MODUŁ AUDIO ---
 const audioSelekt = new Audio('selekt.wav');
