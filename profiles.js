@@ -1,4 +1,4 @@
-// --- BAZA PROFILI POWIATÓW I ULIC (POWIAT RACIBORSKI) ---
+// --- BAZA PROFILI POWIATÓW I ULIC (POWIAT Lubelski) ---
 var RAW_PROFILES = [{
 {
         id: "lubelski",
