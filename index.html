@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
+<!DOCTYPE html><html lang="pl"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SWD PSP v1.5.0 - Symulator (Powiat Lubelski)</title>
+    <title>SWD PSP v1.5.0 - Symulator (Miasto / Powiat Lubelski)</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-</head>
-<body>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /></head><body>
 
     <div class="top-menu">
         <div class="menu-item">System</div>
@@ -104,8 +100,8 @@
                 <div class="form-title" style="color: #b30000;">Formatka zgłoszenia z Centrum Powiadamiania Ratunkowego</div>
                 <div style="margin-bottom: 6px; padding: 4px; background: #fff0f0; border: 1px solid #ffcccc;">
                     <b>ID CPR:</b> <span id="cpr-id">WCPR-2026-9932</span><br>
-                    <b>Miejscowość:</b> <span id="cpr-city">Racibórz</span><br>
-                    <b>Adres:</b> <span id="cpr-street">ul. Opawska 45</span><br>
+                    <b>Miejscowość:</b> <span id="cpr-city">Lublin</span><br>
+                    <b>Adres:</b> <span id="cpr-street">al. Spółdzielczości Pracy 36</span><br>
                     <b>Zgłaszający:</b> <span id="cpr-caller">Jan Kowalski (tel. 601-234-567)</span>
                 </div>
                 <div class="form-title">Treść powiadomienia:</div>
@@ -174,7 +170,12 @@
                             <div class="form-group" style="flex: 1;">
                                 <label>Jednostka:</label>
                                 <select id="inp-ev-jrg">
-                                    <option>JRG Racibórz</option>
+                                    <option>KM PSP Lublin</option>
+                                    <option>JRG 1 Lublin</option>
+                                    <option>JRG 2 Lublin</option>
+                                    <option>JRG 3 Lublin</option>
+                                    <option>JRG Bełżyce</option>
+                                    <option>JRG Bychawa</option>
                                 </select>
                             </div>
                         </div>
@@ -186,7 +187,7 @@
                                 <div class="form-title">Lokalizacja</div>
                                 <div class="form-group" style="position: relative;">
                                     <label>Miejscowość:</label>
-                                    <input type="text" id="inp-ev-city" placeholder="Wpisz np. Racibórz, Pietrowice Wielkie..." oninput="handleCityInput(this)">
+                                    <input type="text" id="inp-ev-city" placeholder="Wpisz np. Lublin, Świdnik, Świdnik Mały..." oninput="handleCityInput(this)">
                                     <div id="city-suggestions" class="suggestions-list" style="display:none; width: 100%; top: 38px;"></div>
                                 </div>
                                 <div class="form-group" style="margin-top: 4px;">
@@ -228,13 +229,23 @@
                                     <div class="form-group" style="flex:1;">
                                         <label>Jedn. prow.:</label>
                                         <select id="inp-ev-lead">
-                                            <option>JRG Racibórz</option>
+                                            <option>KM PSP Lublin</option>
+                                            <option>JRG 1 Lublin</option>
+                                            <option>JRG 2 Lublin</option>
+                                            <option>JRG 3 Lublin</option>
+                                            <option>JRG Bełżyce</option>
+                                            <option>JRG Bychawa</option>
                                         </select>
                                     </div>
                                     <div class="form-group" style="flex:1;">
                                         <label>Teren działania:</label>
                                         <select id="inp-ev-area">
-                                            <option>JRG Racibórz</option>
+                                            <option>KM PSP Lublin</option>
+                                            <option>JRG 1 Lublin</option>
+                                            <option>JRG 2 Lublin</option>
+                                            <option>JRG 3 Lublin</option>
+                                            <option>JRG Bełżyce</option>
+                                            <option>JRG Bychawa</option>
                                         </select>
                                     </div>
                                 </div>
@@ -318,6 +329,4 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="profiles.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+    <script src="script.js"></script></body></html>
